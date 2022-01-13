@@ -10,11 +10,12 @@
 # include <arpa/inet.h>
 # include <netdb.h>
 # include <netinet/ip_icmp.h>
+# include <limits.h>
+# include <float.h>
 
 # include <string.h>
 # include <errno.h>
 # include <unistd.h>
-
 
 /*
        EAI_ADDRFAMILY

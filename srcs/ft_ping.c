@@ -1,12 +1,33 @@
 #include "ft_ping.h"
 
-typedef struct		s_ping
+typedef struct			s_timer
 {
-	int fd;
-	struct sockaddr_in *addr;
-}					t_ping;
+	double				min;
+	double				max;
+	double				sum;
+	long				tsum;
+	long				tsum2;
+}						t_timer;
+
+typedef struct			s_ping
+{
+	int					fd;
+	struct sockaddr_in	*addr;
+	char				*hostname;
+	size_t				n_repeat;
+	size_t				transmitted;
+	size_t				received;
+	t_timer				timer;
+}						t_ping;
 
 t_ping g_ping;
+
+double		ft_sqrt(double nb, double x)
+{
+	for (int i = 0; i < 1000; i++)
+		x = (x + nb / x) / 2;
+	return (x);
+}
 
 /* RFC 1071 https://datatracker.ietf.org/doc/html/rfc1071 */
 unsigned short checksum(void *addr, size_t count)
@@ -57,7 +78,7 @@ int				ping(int sockfd, struct sockaddr_in *serv_addr)
 {
 	struct timeval start;
 	struct timeval end;
-	static nbr_packet = 0;
+	static int nbr_packet = 0;
 
 	alarm(1);
 	if (gettimeofday(&start, NULL))
@@ -72,13 +93,18 @@ int				ping(int sockfd, struct sockaddr_in *serv_addr)
 	hdr->un.echo.id = getpid();
 	hdr->un.echo.sequence = ++nbr_packet;
 	hdr->checksum = checksum(&buffer, sizeof(buffer));
+	g_ping.n_repeat = nbr_packet;
 	int sent = 0;
 	if (sendto(sockfd, &buffer, sizeof(buffer), 0, (struct sockaddr *)serv_addr, sizeof(*serv_addr)) < 0)
 	{
-//		dprintf(stderr_fileno, "%s: sendto: %s\n", argv[0], strerror(errno));
+//		dprintf(STDERR_FILENO, "%s: sendto: %s\n", argv[0], strerror(errno));
+		return (1);
 	}
 	else
+	{
 		sent = 1;
+		++g_ping.transmitted;
+	}
 	char buf[80];
 	struct iovec iov;
 	struct msghdr msghdr;
@@ -91,19 +117,29 @@ int				ping(int sockfd, struct sockaddr_in *serv_addr)
 	msghdr.msg_iovlen = 1;
 	if (recvmsg(sockfd, &msghdr, 0) < 0)
 	{
-//		dprintf(stderr_fileno, "%s: recvmsg: %s\n", argv[0], strerror(errno));
+//		dprintf(STDERR_FILENO, "%s: recvmsg: %s\n", argv[0], strerror(errno));
+		return (1);
 	}
+	else
+		++g_ping.received;
 	if (gettimeofday(&end, NULL))
 	{
-//		dprintf(stderr_fileno, "%s: gettimeofday: %s\n", argv[0], strerror(errno));
+//		dprintf(STDERR_FILENO, "%s: gettimeofday: %s\n", argv[0], strerror(errno));
 	}
 	if (sent)
 	{
-		double diff = ((end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec);
-		if (diff < 1000)
-			printf("icmp_seq=%d time=%.3f ms\n", , (float)((end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec) / 1000);
+		double diff = (float)((end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec) / 1000;
+		if (diff < g_ping.timer.min)
+			g_ping.timer.min = diff;
+		if (diff > g_ping.timer.max)
+			g_ping.timer.max = diff;
+		g_ping.timer.sum += diff;
+		g_ping.timer.tsum += (end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec;
+		g_ping.timer.tsum2 += ((end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec) * ((end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec);
+		if (diff < 0.1)
+			printf("icmp_seq=%d time=%.3f ms\n", nbr_packet, diff);
 		else
-			printf("icmp_seq=%d time=%.2f ms\n", , (float)((end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec) / 1000);
+			printf("icmp_seq=%d time=%.2f ms\n", nbr_packet, diff);
 	}
 	else
 		printf("ko\n");
@@ -118,7 +154,12 @@ void			sig_handler(int sig_num)
 	else if (sig_num == SIGINT)
 	{
 		/* TODO: print stats */
-		printf("hello\n");
+		printf("\n--- %s ping statistics ---\n", g_ping.hostname);
+		printf("%ld packets transmitted, %ld received\n", g_ping.transmitted, g_ping.received);
+		g_ping.timer.tsum /= g_ping.received + g_ping.n_repeat;
+		g_ping.timer.tsum2 /= g_ping.received + g_ping.n_repeat;
+		double tmdev = ft_sqrt(g_ping.timer.tsum2 - g_ping.timer.tsum * g_ping.timer.tsum, g_ping.timer.tsum / g_ping.received) / 1000;
+		printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f ms\n", g_ping.timer.min, g_ping.timer.sum / g_ping.received, g_ping.timer.max, tmdev);
 		exit(0);
 	}
 }
@@ -134,18 +175,17 @@ int				main(int argc, char *argv[])
 		return (1);
 	}
 	/* TODO: Parse options */
-
-	char *hostname = argv[1];
+	g_ping.hostname = argv[1];
 	/* Resolve hostname */
 	char addr[256];
-	ret = resolve_hostname(addr, hostname);
+	ret = resolve_hostname(addr, g_ping.hostname);
 	if (ret)
 	{
 /*
 		if (ret == EAI_AGAIN)
-			dprintf(STDERR_FILENO, "%s: %s: Temporary failure in name resolution\n", argv[0], hostname);
+			dprintf(STDERR_FILENO, "%s: %s: Temporary failure in name resolution\n", argv[0], g_ping.hostname);
 		else*/
-			dprintf(STDERR_FILENO, "%s: %s: Name or service not known\n", argv[0], hostname);
+			dprintf(STDERR_FILENO, "%s: %s: Name or service not known\n", argv[0], g_ping.hostname);
 		return (1);
 	}
 	printf("%s\n", addr);
@@ -172,6 +212,13 @@ int				main(int argc, char *argv[])
 	/* TODO: gettimeofday */
 	g_ping.fd = sockfd;
 	g_ping.addr = &serv_addr;
+	g_ping.transmitted = 0;
+	g_ping.received = 0;
+	g_ping.timer.min = DBL_MAX;
+	g_ping.timer.max = 0;
+	g_ping.timer.sum = 0;
+	g_ping.timer.tsum = 0;
+	g_ping.timer.tsum2 = 0;
 	signal(SIGALRM, sig_handler); // Register signal handler
 	signal(SIGINT, sig_handler); // Register signal handler
 	ping(sockfd, &serv_addr);
