@@ -35,6 +35,8 @@ typedef struct			s_ping
 	size_t				transmitted;
 	size_t				received;
 	t_timer				timer;
+	struct timeval		start;
+	struct timeval		end;
 }						t_ping;
 
 /*

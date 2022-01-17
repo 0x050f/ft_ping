@@ -132,12 +132,23 @@ void			sig_handler(int sig_num)
 	(void)sig_num;
 
 	if (sig_num == SIGALRM)
+	{
+		if (gettimeofday(&g_ping.end, NULL))
+		{
+		}
 		ping(g_ping.fd, g_ping.addr);
+	}
 	else if (sig_num == SIGINT)
 	{
 		/* TODO: print stats */
 		printf("\n--- %s ping statistics ---\n", g_ping.hostname);
-		printf("%ld packets transmitted, %ld received\n", g_ping.transmitted, g_ping.received);
+		/* TODO: packet loss */
+		long time;
+		if (g_ping.end.tv_sec && g_ping.end.tv_usec)
+			time = ((g_ping.end.tv_sec - g_ping.start.tv_sec) * 1000000 + g_ping.end.tv_usec - g_ping.start.tv_usec) / 1000;
+		else
+			time = 0;
+		printf("%ld packets transmitted, %ld received, 0%% packet loss, time %ld ms\n", g_ping.transmitted, g_ping.received, time);
 		g_ping.timer.tsum /= g_ping.received;
 		g_ping.timer.tsum2 /= g_ping.received;
 		double tmdev;
@@ -195,7 +206,6 @@ int				main(int argc, char *argv[])
 		return (1);
 	}
 	/* TODO: signal handler ctrl + c */
-	/* TODO: gettimeofday */
 	g_ping.fd = sockfd;
 	g_ping.addr = &serv_addr;
 	g_ping.transmitted = 0;
@@ -207,6 +217,11 @@ int				main(int argc, char *argv[])
 	g_ping.timer.tsum2 = 0;
 	signal(SIGALRM, sig_handler); // Register signal handler
 	signal(SIGINT, sig_handler); // Register signal handler
+	g_ping.end.tv_sec = 0;
+	g_ping.end.tv_usec = 0;
+	if (gettimeofday(&g_ping.start, NULL))
+	{
+	}
 	ping(sockfd, &serv_addr);
 	while (1)
 		;
