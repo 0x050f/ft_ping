@@ -1,31 +1,11 @@
 #include "ft_ping.h"
 
-typedef struct			s_timer
-{
-	double				min;
-	double				max;
-	double				sum;
-	long				tsum;
-	long				tsum2;
-}						t_timer;
-
-typedef struct			s_ping
-{
-	int					fd;
-	struct sockaddr_in	*addr;
-	char				*hostname;
-	size_t				n_repeat;
-	size_t				transmitted;
-	size_t				received;
-	t_timer				timer;
-}						t_ping;
-
 t_ping g_ping;
 
-double		ft_sqrt(double nb, double x)
+long		ft_sqrt(long long nb, long long x)
 {
-	for (int i = 0; i < 1000; i++)
-		x = (x + nb / x) / 2;
+	for (int i = 0; i < 10; i++)
+		x -= (x * x - nb) / (2 * x);
 	return (x);
 }
 
@@ -80,11 +60,6 @@ int				ping(int sockfd, struct sockaddr_in *serv_addr)
 	struct timeval end;
 	static int nbr_packet = 0;
 
-	alarm(1);
-	if (gettimeofday(&start, NULL))
-	{
-//		dprintf(stderr_fileno, "%s: gettimeofday: %s\n", argv[0], strerror(errno));
-	}
 	char buffer[64];
 	bzero(buffer, sizeof(buffer));
 	struct icmphdr *hdr;
@@ -95,16 +70,7 @@ int				ping(int sockfd, struct sockaddr_in *serv_addr)
 	hdr->checksum = checksum(&buffer, sizeof(buffer));
 	g_ping.n_repeat = nbr_packet;
 	int sent = 0;
-	if (sendto(sockfd, &buffer, sizeof(buffer), 0, (struct sockaddr *)serv_addr, sizeof(*serv_addr)) < 0)
-	{
-//		dprintf(STDERR_FILENO, "%s: sendto: %s\n", argv[0], strerror(errno));
-		return (1);
-	}
-	else
-	{
-		sent = 1;
-		++g_ping.transmitted;
-	}
+	// sendto ^ | recvmsg v
 	char buf[80];
 	struct iovec iov;
 	struct msghdr msghdr;
@@ -115,6 +81,21 @@ int				ping(int sockfd, struct sockaddr_in *serv_addr)
 	iov.iov_len = sizeof(buf);
 	msghdr.msg_iov = &iov;
 	msghdr.msg_iovlen = 1;
+	if (gettimeofday(&start, NULL))
+	{
+//		dprintf(stderr_fileno, "%s: gettimeofday: %s\n", argv[0], strerror(errno));
+	}
+	alarm(1);
+	if (sendto(sockfd, &buffer, sizeof(buffer), 0, (struct sockaddr *)serv_addr, sizeof(*serv_addr)) < 0)
+	{
+//		dprintf(STDERR_FILENO, "%s: sendto: %s\n", argv[0], strerror(errno));
+		return (1);
+	}
+	else
+	{
+		sent = 1;
+		++g_ping.transmitted;
+	}
 	if (recvmsg(sockfd, &msghdr, 0) < 0)
 	{
 //		dprintf(STDERR_FILENO, "%s: recvmsg: %s\n", argv[0], strerror(errno));
@@ -135,7 +116,7 @@ int				ping(int sockfd, struct sockaddr_in *serv_addr)
 			g_ping.timer.max = diff;
 		g_ping.timer.sum += diff;
 		g_ping.timer.tsum += (end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec;
-		g_ping.timer.tsum2 += ((end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec) * ((end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec);
+		g_ping.timer.tsum2 += ((long long)(end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec) * ((long long)(end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec);
 		if (diff < 0.1)
 			printf("icmp_seq=%d time=%.3f ms\n", nbr_packet, diff);
 		else
@@ -149,6 +130,7 @@ int				ping(int sockfd, struct sockaddr_in *serv_addr)
 void			sig_handler(int sig_num)
 {
 	(void)sig_num;
+
 	if (sig_num == SIGALRM)
 		ping(g_ping.fd, g_ping.addr);
 	else if (sig_num == SIGINT)
@@ -156,9 +138,13 @@ void			sig_handler(int sig_num)
 		/* TODO: print stats */
 		printf("\n--- %s ping statistics ---\n", g_ping.hostname);
 		printf("%ld packets transmitted, %ld received\n", g_ping.transmitted, g_ping.received);
-		g_ping.timer.tsum /= g_ping.received + g_ping.n_repeat;
-		g_ping.timer.tsum2 /= g_ping.received + g_ping.n_repeat;
-		double tmdev = ft_sqrt(g_ping.timer.tsum2 - g_ping.timer.tsum * g_ping.timer.tsum, g_ping.timer.tsum / g_ping.received) / 1000;
+		g_ping.timer.tsum /= g_ping.received;
+		g_ping.timer.tsum2 /= g_ping.received;
+		double tmdev;
+		if (g_ping.n_repeat != 1)
+			tmdev = (long double)ft_sqrt(g_ping.timer.tsum2 - g_ping.timer.tsum * g_ping.timer.tsum, g_ping.timer.max * 1000 - g_ping.timer.min * 1000) / 1000.0;
+		else
+			tmdev = 0;
 		printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f ms\n", g_ping.timer.min, g_ping.timer.sum / g_ping.received, g_ping.timer.max, tmdev);
 		exit(0);
 	}

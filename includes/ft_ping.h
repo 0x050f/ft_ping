@@ -17,6 +17,26 @@
 # include <errno.h>
 # include <unistd.h>
 
+typedef struct			s_timer
+{
+	double				min;
+	double				max;
+	double				sum;
+	long long			tsum;
+	long long			tsum2;
+}						t_timer;
+
+typedef struct			s_ping
+{
+	int					fd;
+	struct sockaddr_in	*addr;
+	char				*hostname;
+	size_t				n_repeat;
+	size_t				transmitted;
+	size_t				received;
+	t_timer				timer;
+}						t_ping;
+
 /*
        EAI_ADDRFAMILY
               The specified network host does not have any network addresses in the requested address family.
