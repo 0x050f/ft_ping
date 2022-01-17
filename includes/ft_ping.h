@@ -34,6 +34,7 @@ typedef struct			s_ping
 	size_t				n_repeat;
 	size_t				transmitted;
 	size_t				received;
+	size_t				errors;
 	t_timer				timer;
 	struct timeval		start;
 	struct timeval		end;

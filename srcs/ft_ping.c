@@ -65,11 +65,11 @@ int				ping(int sockfd, struct sockaddr_in *serv_addr)
 	struct icmphdr *hdr;
 	hdr = (struct icmphdr *)&buffer;
 	hdr->type = ICMP_ECHO;
+	hdr->code = 0;
 	hdr->un.echo.id = getpid();
 	hdr->un.echo.sequence = ++nbr_packet;
 	hdr->checksum = checksum(&buffer, sizeof(buffer));
 	g_ping.n_repeat = nbr_packet;
-	int sent = 0;
 	// sendto ^ | recvmsg v
 	char buf[80];
 	struct iovec iov;
@@ -81,34 +81,29 @@ int				ping(int sockfd, struct sockaddr_in *serv_addr)
 	iov.iov_len = sizeof(buf);
 	msghdr.msg_iov = &iov;
 	msghdr.msg_iovlen = 1;
+	char ans_data[4096];
+	msghdr.msg_control = ans_data;
+	msghdr.msg_controllen = sizeof(ans_data);
+	msghdr.msg_flags = 0;
 	if (gettimeofday(&start, NULL))
 	{
 //		dprintf(stderr_fileno, "%s: gettimeofday: %s\n", argv[0], strerror(errno));
 	}
 	alarm(1);
-	if (sendto(sockfd, &buffer, sizeof(buffer), 0, (struct sockaddr *)serv_addr, sizeof(*serv_addr)) < 0)
-	{
-//		dprintf(STDERR_FILENO, "%s: sendto: %s\n", argv[0], strerror(errno));
+	if (sendto(sockfd, &buffer, sizeof(buffer), 0, (struct sockaddr *)serv_addr, sizeof(*serv_addr)) <= 0)
 		return (1);
-	}
 	else
-	{
-		sent = 1;
 		++g_ping.transmitted;
-	}
-	if (recvmsg(sockfd, &msghdr, 0) < 0)
+	//msg_control=[{cmsg_len=32, cmsg_level=SOL_SOCKET, cmsg_type=SO_TIMESTAMP_OLD, cmsg_data={tv_sec=1642460328, tv_usec=296924}}], msg_controllen=32, msg_flags=0}
+	recvmsg(sockfd, &msghdr, 0);
+	struct icmphdr *icmp = (struct icmphdr	*)(msghdr.msg_iov->iov_base + 20);
+	++g_ping.received;
+	if (icmp->type == ICMP_ECHOREPLY)
 	{
-//		dprintf(STDERR_FILENO, "%s: recvmsg: %s\n", argv[0], strerror(errno));
-		return (1);
-	}
-	else
-		++g_ping.received;
-	if (gettimeofday(&end, NULL))
-	{
-//		dprintf(STDERR_FILENO, "%s: gettimeofday: %s\n", argv[0], strerror(errno));
-	}
-	if (sent)
-	{
+		if (gettimeofday(&end, NULL))
+		{
+	//		dprintf(STDERR_FILENO, "%s: gettimeofday: %s\n", argv[0], strerror(errno));
+		}
 		double diff = (float)((end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec) / 1000;
 		if (diff < g_ping.timer.min)
 			g_ping.timer.min = diff;
@@ -121,10 +116,16 @@ int				ping(int sockfd, struct sockaddr_in *serv_addr)
 			printf("icmp_seq=%d time=%.3f ms\n", nbr_packet, diff);
 		else
 			printf("icmp_seq=%d time=%.2f ms\n", nbr_packet, diff);
+		return (0);
 	}
-	else
-		printf("ko\n");
-	return (0);
+	else if (icmp->type != ICMP_ECHO)
+	{
+		/* TODO: From XXXX Destination host unreachable */
+		char *error = NULL;
+		printf("icmp_seq=%hu %s\n", nbr_packet, error);
+		++g_ping.errors;
+	}
+	return (1);
 }
 
 void			sig_handler(int sig_num)
@@ -148,15 +149,26 @@ void			sig_handler(int sig_num)
 			time = ((g_ping.end.tv_sec - g_ping.start.tv_sec) * 1000000 + g_ping.end.tv_usec - g_ping.start.tv_usec) / 1000;
 		else
 			time = 0;
-		printf("%ld packets transmitted, %ld received, 0%% packet loss, time %ld ms\n", g_ping.transmitted, g_ping.received, time);
-		g_ping.timer.tsum /= g_ping.received;
-		g_ping.timer.tsum2 /= g_ping.received;
-		double tmdev;
-		if (g_ping.n_repeat != 1)
-			tmdev = (long double)ft_sqrt(g_ping.timer.tsum2 - g_ping.timer.tsum * g_ping.timer.tsum, g_ping.timer.max * 1000 - g_ping.timer.min * 1000) / 1000.0;
+		printf("%ld packets transmitted, %ld received, ", g_ping.transmitted, g_ping.received);
+		if (g_ping.errors)
+			printf("+%ld errors, ", g_ping.errors);
+		double percentage;
+		if (g_ping.received)
+			percentage = (1.0 - (double)g_ping.received / (double)g_ping.transmitted) * 100.0;
 		else
-			tmdev = 0;
-		printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f ms\n", g_ping.timer.min, g_ping.timer.sum / g_ping.received, g_ping.timer.max, tmdev);
+			percentage = 0;
+		printf("%.4g%% packet loss, time %ld ms\n", percentage, time);
+		if (g_ping.received)
+		{
+			g_ping.timer.tsum /= g_ping.received;
+			g_ping.timer.tsum2 /= g_ping.received;
+			double tmdev;
+			if (g_ping.n_repeat != 1)
+				tmdev = (long double)ft_sqrt(g_ping.timer.tsum2 - g_ping.timer.tsum * g_ping.timer.tsum, g_ping.timer.max * 1000 - g_ping.timer.min * 1000) / 1000.0;
+			else
+				tmdev = 0;
+			printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f ms\n", g_ping.timer.min, g_ping.timer.sum / g_ping.received, g_ping.timer.max, tmdev);
+		}
 		exit(0);
 	}
 }
@@ -205,11 +217,20 @@ int				main(int argc, char *argv[])
 		dprintf(STDERR_FILENO, "%s: socket: Operation not permitted\n", argv[0]);
 		return (1);
 	}
+    // set socket options at ip to TTL and value to 64,
+    // change to what you want by setting ttl_val
+	int ttl_val = 64;
+    setsockopt(sockfd, SOL_IP, IP_TTL, &ttl_val, sizeof(ttl_val));
+	struct timeval tv_out;
+	tv_out.tv_sec = 1;
+	tv_out.tv_usec = 0;
+	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,(const char*)&tv_out, sizeof tv_out);// timeout recvmsg
 	/* TODO: signal handler ctrl + c */
 	g_ping.fd = sockfd;
 	g_ping.addr = &serv_addr;
 	g_ping.transmitted = 0;
 	g_ping.received = 0;
+	g_ping.errors = 0;
 	g_ping.timer.min = DBL_MAX;
 	g_ping.timer.max = 0;
 	g_ping.timer.sum = 0;
