@@ -85,6 +85,10 @@ int				ping(int sockfd, struct sockaddr_in *serv_addr)
 	msghdr.msg_control = ans_data;
 	msghdr.msg_controllen = sizeof(ans_data);
 	msghdr.msg_flags = 0;
+	struct timeval tv_out;
+	tv_out.tv_sec = 1;
+	tv_out.tv_usec = 0;
+	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,(const char*)&tv_out, sizeof tv_out);// timeout recvmsg
 	if (gettimeofday(&start, NULL))
 	{
 //		dprintf(stderr_fileno, "%s: gettimeofday: %s\n", argv[0], strerror(errno));
@@ -97,9 +101,9 @@ int				ping(int sockfd, struct sockaddr_in *serv_addr)
 	//msg_control=[{cmsg_len=32, cmsg_level=SOL_SOCKET, cmsg_type=SO_TIMESTAMP_OLD, cmsg_data={tv_sec=1642460328, tv_usec=296924}}], msg_controllen=32, msg_flags=0}
 	recvmsg(sockfd, &msghdr, 0);
 	struct icmphdr *icmp = (struct icmphdr	*)(msghdr.msg_iov->iov_base + 20);
-	++g_ping.received;
-	if (icmp->type == ICMP_ECHOREPLY)
+	if (icmp->type == ICMP_ECHOREPLY && icmp->un.echo.sequence == hdr->un.echo.sequence && icmp->un.echo.sequence == hdr->un.echo.sequence)
 	{
+		++g_ping.received;
 		if (gettimeofday(&end, NULL))
 		{
 	//		dprintf(STDERR_FILENO, "%s: gettimeofday: %s\n", argv[0], strerror(errno));
@@ -120,11 +124,14 @@ int				ping(int sockfd, struct sockaddr_in *serv_addr)
 	}
 	else if (icmp->type != ICMP_ECHO)
 	{
+		printf("icmp->type == %d\n", icmp->type);
 		/* TODO: From XXXX Destination host unreachable */
 		char *error = NULL;
 		printf("icmp_seq=%hu %s\n", nbr_packet, error);
 		++g_ping.errors;
 	}
+	else
+		printf("icmp_seq=%hu - icmp echo\n", nbr_packet);
 	return (1);
 }
 
@@ -221,10 +228,6 @@ int				main(int argc, char *argv[])
     // change to what you want by setting ttl_val
 	int ttl_val = 64;
     setsockopt(sockfd, SOL_IP, IP_TTL, &ttl_val, sizeof(ttl_val));
-	struct timeval tv_out;
-	tv_out.tv_sec = 1;
-	tv_out.tv_usec = 0;
-	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,(const char*)&tv_out, sizeof tv_out);// timeout recvmsg
 	/* TODO: signal handler ctrl + c */
 	g_ping.fd = sockfd;
 	g_ping.addr = &serv_addr;
