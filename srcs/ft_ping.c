@@ -1,5 +1,12 @@
 #include "ft_ping.h"
 
+long		ft_sqrt(long long nb, long long x)
+{
+	for (int i = 0; i < 10; i++)
+		x -= (x * x - nb) / (2 * x);
+	return (x);
+}
+
 void	ft_bzero(void *s, size_t n)
 {
 	char	*tmp;
@@ -12,19 +19,53 @@ void	ft_bzero(void *s, size_t n)
 	}
 }
 
-void	send_ping()
+void	send_ping(int signum)
 {
+	(void)signum;
 }
 
-void	recv_ping(t_ping *ping)
+void	recv_ping(void)
 {
-	(void)ping;
 	while (true)
-		;
+	{
+		gettimeofday(&g_ping.stats.end, NULL);
+	}
 }
 
-void	result_ping()
+long	get_time_ms(struct timeval *time)
 {
+	return (((time->tv_sec - time->tv_sec) * 1000000 + time->tv_usec - time->tv_usec) / 1000);
+}
+
+void	result_ping(int signum)
+{
+	t_stats	*stats;
+	double	percentage;
+	double	tmdev;
+	long	time;
+
+	(void)signum;
+	stats = &g_ping.stats;
+	printf("\n--- %s ping statistics ---\n", g_ping.hostname);
+	printf("%ld packets transmitted, %ld received, ", stats->transmitted, stats->received);
+	if (stats->errors)
+		printf("+%ld errors, ", stats->errors);
+	percentage = 0;
+	if (stats->received)
+		percentage = (1.0 - (double)stats->received / (double)stats->transmitted) * 100.0;
+	time = 0;
+	if (stats->end.tv_sec && stats->end.tv_usec)
+		get_time_ms(&stats->end);
+	printf("%.4g%% packet loss, time %ld ms\n", percentage, time);
+	if (stats->received)
+	{
+		stats->timer.tsum /= stats->received;
+		stats->timer.tsum2 /= stats->received;
+		tmdev = 0;
+		if (stats->n_repeat != 1)
+			tmdev = (long double)ft_sqrt(stats->timer.tsum2 - stats->timer.tsum * stats->timer.tsum, stats->timer.max * 1000 - stats->timer.min * 1000) / 1000.0;
+		printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f ms\n", stats->timer.min, stats->timer.sum / stats->received, stats->timer.max, tmdev);
+	}
 	exit(0);
 }
 
@@ -116,9 +157,9 @@ int			main(int argc, char *argv[])
 	}
 	if (init_ping(&g_ping))
 		return (1);
-	signal(SIGALRM, send_ping);
-	signal(SIGINT, result_ping);
-	send_ping();
-	recv_ping(&g_ping);
+	signal(SIGALRM, &send_ping);
+	signal(SIGINT, &result_ping);
+	send_ping(0);
+	recv_ping();
 	return (0);
 }
