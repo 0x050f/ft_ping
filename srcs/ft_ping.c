@@ -21,7 +21,10 @@ void	ft_bzero(void *s, size_t n)
 
 void	send_ping(int signum)
 {
+	char buffer[sizeof(struct iphdr) + 64];
 	(void)signum;
+	++g_ping.stats.transmitted;
+	alarm(SEND_DELAY);
 }
 
 void	recv_ping(void)

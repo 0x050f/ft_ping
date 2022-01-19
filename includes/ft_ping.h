@@ -5,6 +5,8 @@
 # include <float.h>
 # include <errno.h>
 # include <netdb.h>
+# include <netinet/ip.h>
+# include <netinet/ip_icmp.h>
 # include <signal.h>
 # include <stdbool.h>
 # include <stdio.h>
@@ -12,6 +14,7 @@
 # include <sys/time.h>
 # include <unistd.h>
 
+# define SEND_DELAY	1
 # define ADDR_SIZE	64
 
 typedef struct		s_timer

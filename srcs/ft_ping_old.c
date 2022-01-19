@@ -58,10 +58,8 @@ int				ping(int sockfd, struct sockaddr_in *serv_addr)
 {
 	static int nbr_packet = 0;
 
-
 	char buffer[20 + ICMP_MINLEN + 56];
 	bzero(buffer, sizeof(buffer));
-	struct 
 	struct icmphdr *hdr;
 	hdr = ((struct icmphdr *)(&buffer + 20));
 	hdr->type = ICMP_ECHO;
