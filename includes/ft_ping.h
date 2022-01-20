@@ -73,6 +73,9 @@ void	send_packet(int signum);
 /* recv_packet.c */
 void	recv_packet(void);
 
+/* ping_stats.c */
+void	ping_stats(int signum);
+
 /* utils.c */
 double		get_diff_ms(struct timeval *start, struct timeval *end);
 long		ft_sqrt(long long nb, long long x);

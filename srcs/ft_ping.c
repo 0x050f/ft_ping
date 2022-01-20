@@ -2,38 +2,6 @@
 
 t_ping		g_ping;
 
-void	ping_stats(int signum)
-{
-	t_stats	*stats;
-	double	percentage;
-	double	tmdev;
-	long	time;
-
-	(void)signum;
-	stats = &g_ping.stats;
-	printf("\n--- %s ping statistics ---\n", g_ping.hostname);
-	printf("%d packets transmitted, %d received, ", stats->transmitted, stats->received);
-	if (stats->errors)
-		printf("+%d errors, ", stats->errors);
-	percentage = 0;
-	if (stats->received)
-		percentage = (1.0 - (double)stats->received / (double)stats->transmitted) * 100.0;
-	time = 0;
-	if (stats->end.tv_sec && stats->end.tv_usec && stats->transmitted > 1)
-		time = get_diff_ms(&stats->start, &stats->end);
-	printf("%.4g%% packet loss, time %ld ms\n", percentage, time);
-	if (stats->received)
-	{
-		stats->timer.tsum /= stats->received;
-		stats->timer.tsum2 /= stats->received;
-		tmdev = 0;
-		if (stats->transmitted != 1)
-			tmdev = (long double)ft_sqrt(stats->timer.tsum2 - stats->timer.tsum * stats->timer.tsum, stats->timer.max * 1000 - stats->timer.min * 1000) / 1000.0;
-		printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f ms\n", stats->timer.min, stats->timer.sum / stats->received, stats->timer.max, tmdev);
-	}
-	exit(0);
-}
-
 int		init_ping(t_ping *ping)
 {
 	int ret;
@@ -89,6 +57,8 @@ int			resolve_hostname(char *addr, char *hostname)
 
 int			check_args(int argc, char *argv[], t_ping *ping)
 {
+	char options[2] = {'f', 'm'};
+
 	ft_bzero(ping, sizeof(t_ping));
 	ping->prg_name = argv[0];
 	if (argc < 2)
@@ -102,6 +72,23 @@ int			check_args(int argc, char *argv[], t_ping *ping)
 	{
 		if (*argv[i] != '-')
 			ping->hostname = argv[i];
+		if (*argv[i] == '-')
+		{
+			int j = 0;
+			while (argv[i][j])
+			{
+				int k = 0;
+				while (options[k])
+				{
+					if (argv[i][j] == options[k])
+						break ;
+					k++;
+				}
+				if (k != sizeof(options))
+					return (1);
+				j++;
+			}
+		}
 	}
 	return (0);
 }
@@ -110,21 +97,22 @@ int			main(int argc, char *argv[])
 {
 	int		ret;
 
-	if (check_args(argc, argv, &g_ping))
-		return (1);
+	ret = check_args(argc, argv, &g_ping); 
+	if (ret)
+		return (ret);
 	ret = resolve_hostname(g_ping.address, g_ping.hostname);
 	if (ret) // TODO: getaddrinfo error
 	{
 		dprintf(STDERR_FILENO, "%s: %s: Name or service not known\n", g_ping.prg_name, g_ping.hostname);
-		return (1);
+		return (2);
 	}
 	else if (!g_ping.address) // TODO: inet_ntop error
 	{
 		dprintf(STDERR_FILENO, "%s: inet_ntop: Error\n", g_ping.prg_name);
-		return (1);
+		return (2);
 	}
 	if (init_ping(&g_ping))
-		return (1);
+		return (2);
 	signal(SIGALRM, &send_packet);
 	signal(SIGINT, &ping_stats);
 	printf("PING %s (%s) %d(%ld) bytes of data.\n", g_ping.hostname, g_ping.address, PAYLOAD_SIZE, sizeof(t_icmp_packet));
