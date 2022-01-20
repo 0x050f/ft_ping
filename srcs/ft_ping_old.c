@@ -9,22 +9,6 @@ long		ft_sqrt(long long nb, long long x)
 	return (x);
 }
 
-/* RFC 1071 https://datatracker.ietf.org/doc/html/rfc1071 */
-unsigned short checksum(void *addr, size_t count)
-{
-	unsigned short *ptr;
-	unsigned long sum;
-
-	ptr = addr;
-	for (sum = 0; count > 1; count -= 2)
-		sum += *ptr++;
-	if (count > 0)
-		sum += *(unsigned char *)ptr;
-	while (sum >> 16)
-		sum = (sum & 0xffff) + (sum >> 16);
-	return (~sum);
-}
-
 void	ft_bzero(void *s, size_t n)
 {
 	char	*tmp;

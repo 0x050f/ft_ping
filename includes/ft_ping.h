@@ -16,6 +16,23 @@
 
 # define SEND_DELAY	1
 # define ADDR_SIZE	64
+# define DATA_SIZE 16
+
+/*
+	Documentation: 
+	https://en.wikipedia.org/wiki/Ping_(networking_utility)
+	https://en.wikipedia.org/wiki/IPv4#Header
+	https://en.wikipedia.org/wiki/Internet_Control_Message_Protocol
+*/
+
+typedef struct		s_icmp_packet
+{
+	struct iphdr	iphdr; // 20 bytes
+	struct icmphdr	icmphdr; // 8 bytes
+	char			payload[4];
+	struct timeval	start; // 16 bytes
+	char			data[DATA_SIZE]; // 16 bytes
+}					t_icmp_packet; // 64 bytes in ipv4
 
 typedef struct		s_timer
 {
@@ -28,7 +45,6 @@ typedef struct		s_timer
 
 typedef struct		s_stats
 {
-	size_t			n_repeat;
 	size_t			transmitted;
 	size_t			received;
 	size_t			errors;
@@ -49,6 +65,15 @@ typedef struct		s_ping
 
 }					t_ping;
 
-t_ping				g_ping;
+extern t_ping		g_ping;
+
+/* send_packet.c */
+void	send_packet(int signum);
+
+/* utils.c */
+double		get_diff_ms(struct timeval *start, struct timeval *end);
+long		ft_sqrt(long long nb, long long x);
+void		*ft_memset(void *b, int c, size_t len);
+void		ft_bzero(void *s, size_t n);
 
 #endif

@@ -1,46 +1,63 @@
 #include "ft_ping.h"
 
-long		ft_sqrt(long long nb, long long x)
+t_ping		g_ping;
+
+void	fill_msg_header(struct msghdr *msghdr, struct iovec *iov, t_icmp_packet *packet, char buffer[512])
 {
-	for (int i = 0; i < 10; i++)
-		x -= (x * x - nb) / (2 * x);
-	return (x);
+	ft_bzero(msghdr, sizeof(struct msghdr));
+	msghdr->msg_name = &g_ping.sockaddr;
+	msghdr->msg_namelen = sizeof(struct sockaddr);
+	iov->iov_base = packet;
+	iov->iov_len = sizeof(t_icmp_packet);
+	msghdr->msg_iov = iov;
+	msghdr->msg_iovlen = 1;
+	msghdr->msg_control = buffer;
+	msghdr->msg_controllen = 512;
+	msghdr->msg_flags = 0;
 }
 
-void	ft_bzero(void *s, size_t n)
+void	recv_packet(void)
 {
-	char	*tmp;
+	char			buffer[512];
+	struct msghdr	msghdr;
+	struct iovec	iov;
+	t_icmp_packet	packet;
 
-	while (n--)
-	{
-		tmp = (char *)s;
-		*tmp = 0;
-		s++;
-	}
-}
-
-void	send_ping(int signum)
-{
-	char buffer[sizeof(struct iphdr) + 64];
-	(void)signum;
-	++g_ping.stats.transmitted;
-	alarm(SEND_DELAY);
-}
-
-void	recv_ping(void)
-{
 	while (true)
 	{
-		gettimeofday(&g_ping.stats.end, NULL);
+		fill_msg_header(&msghdr, &iov, &packet, buffer);
+		if (recvmsg(g_ping.sockfd, &msghdr, 0) < 0)
+			dprintf(STDERR_FILENO, "%s: recvmsg: Error\n", g_ping.prg_name);
+		if (packet.icmphdr.type == ICMP_ECHOREPLY)
+		{
+			++g_ping.stats.received;
+			if (gettimeofday(&g_ping.stats.end, NULL)) // TODO: error gettimeofday
+				dprintf(STDERR_FILENO, "%s: gettimeofday: Error\n", g_ping.prg_name);
+			double diff = get_diff_ms(&packet.start, &g_ping.stats.end);
+			if (diff < g_ping.stats.timer.min)
+				g_ping.stats.timer.min = diff;
+			if (diff > g_ping.stats.timer.max)
+				g_ping.stats.timer.max = diff;
+			g_ping.stats.timer.sum += diff;
+			g_ping.stats.timer.tsum += diff * 1000;
+			g_ping.stats.timer.tsum2 +=  diff * 1000 * diff * 1000;
+			if (diff < 0.1)
+				printf("icmp_seq=%ld time=%.3f ms\n", g_ping.stats.received, diff);
+			else
+				printf("icmp_seq=%ld time=%.2f ms\n", g_ping.stats.received, diff);
+		}
+		else if (packet.icmphdr.type != ICMP_ECHO)
+		{
+			printf("icmp->type == %d\n", packet.icmphdr.type);
+			/* TODO: From XXXX Destination host unreachable */
+			char *error = NULL;
+			printf("icmp_seq=%hu %s\n", packet.icmphdr.un.echo.sequence, error);
+			++g_ping.stats.errors;
+		}
 	}
 }
 
-long	get_time_ms(struct timeval *time)
-{
-	return (((time->tv_sec - time->tv_sec) * 1000000 + time->tv_usec - time->tv_usec) / 1000);
-}
-
-void	result_ping(int signum)
+void	ping_stats(int signum)
 {
 	t_stats	*stats;
 	double	percentage;
@@ -58,14 +75,14 @@ void	result_ping(int signum)
 		percentage = (1.0 - (double)stats->received / (double)stats->transmitted) * 100.0;
 	time = 0;
 	if (stats->end.tv_sec && stats->end.tv_usec)
-		get_time_ms(&stats->end);
+		time = get_diff_ms(&stats->start, &stats->end);
 	printf("%.4g%% packet loss, time %ld ms\n", percentage, time);
 	if (stats->received)
 	{
 		stats->timer.tsum /= stats->received;
 		stats->timer.tsum2 /= stats->received;
 		tmdev = 0;
-		if (stats->n_repeat != 1)
+		if (stats->transmitted != 1)
 			tmdev = (long double)ft_sqrt(stats->timer.tsum2 - stats->timer.tsum * stats->timer.tsum, stats->timer.max * 1000 - stats->timer.min * 1000) / 1000.0;
 		printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f ms\n", stats->timer.min, stats->timer.sum / stats->received, stats->timer.max, tmdev);
 	}
@@ -91,8 +108,9 @@ int		init_ping(t_ping *ping)
 		return (1);
 	}
 	ping->ttl_val = 64;
+	int on = 1;
 	/* Set socket options at ip to TTL and value to ttl_val */
-	setsockopt(ping->sockfd, SOL_IP, IP_TTL, &ping->ttl_val, sizeof(ping->ttl_val));
+	setsockopt(ping->sockfd, IPPROTO_IP, IP_HDRINCL, (const char *)&on, sizeof(on));
 	ping->stats.timer.min = DBL_MAX;
 	if (gettimeofday(&ping->stats.start, NULL))
 	{
@@ -160,9 +178,9 @@ int			main(int argc, char *argv[])
 	}
 	if (init_ping(&g_ping))
 		return (1);
-	signal(SIGALRM, &send_ping);
-	signal(SIGINT, &result_ping);
-	send_ping(0);
-	recv_ping();
+	signal(SIGALRM, &send_packet);
+	signal(SIGINT, &ping_stats);
+	send_packet(0);
+	recv_packet();
 	return (0);
 }
