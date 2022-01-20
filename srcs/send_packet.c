@@ -1,7 +1,6 @@
 #include "ft_ping.h"
 
 /* RFC 1071 https://datatracker.ietf.org/doc/html/rfc1071 */
-/*
 unsigned short checksum(void *addr, size_t count)
 {
 	unsigned short *ptr;
@@ -15,33 +14,6 @@ unsigned short checksum(void *addr, size_t count)
 	while (sum >> 16)
 		sum = (sum & 0xffff) + (sum >> 16);
 	return (~sum);
-}
-*/
-uint16_t checksum(uint16_t *addr, int len)
-{
-  int nleft = len;
-  uint32_t sum = 0;
-  uint16_t *w = addr;
-  uint16_t answer = 0;
-
-  // Adding 16 bits sequentially in sum
-  while (nleft > 1) {
-    sum += *w;
-    nleft -= 2;
-    w++;
-  }
-
-  // If an odd byte is left
-  if (nleft == 1) {
-    *(unsigned char *) (&answer) = *(unsigned char *) w;
-    sum += answer;
-  }
-
-  sum = (sum >> 16) + (sum & 0xffff);
-  sum += (sum >> 16);
-  answer = ~sum;
-
-  return answer;
 }
 
 void	fill_ip_header(struct iphdr *iphdr)
@@ -78,8 +50,7 @@ void	send_packet(int signum)
 	fill_ip_header(&packet.iphdr);
 	if (gettimeofday(&packet.start, NULL))// TODO: error gettimeofday
 		dprintf(STDERR_FILENO, "%s: gettimeofday: Error\n", g_ping.prg_name);
-	ft_memset(packet.payload, 42, 4);
-	ft_memset(packet.data, 42, DATA_SIZE);
+	ft_memset(packet.payload, 42, PAYLOAD_SIZE);
 	fill_icmp_header(&packet.icmphdr); // checksum after fill everything in payload
 	if (sendto(g_ping.sockfd, &packet, sizeof(packet), 0, (struct sockaddr *)&g_ping.sockaddr, sizeof(struct sockaddr)) < 0) // TODO: error sendto
 		dprintf(STDERR_FILENO, "%s: sendto: Error\n", g_ping.prg_name);
