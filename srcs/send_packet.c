@@ -28,7 +28,7 @@ void	fill_ip_header(struct iphdr *iphdr)
 	iphdr->protocol = IPPROTO_ICMP;
 	iphdr->check = 0;
 	iphdr->saddr = INADDR_ANY;
-	iphdr->daddr = g_ping.sockaddr.sin_addr.s_addr;
+	iphdr->daddr = g_ping.ip_addr;
 }
 
 void	fill_icmp_header(struct icmphdr *icmphdr)

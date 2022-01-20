@@ -38,12 +38,13 @@ int		init_ping(t_ping *ping)
 {
 	int ret;
 
-	ret = inet_pton(AF_INET, ping->address, &ping->sockaddr.sin_addr.s_addr);
+	ret = inet_pton(AF_INET, ping->address, &ping->ip_addr);
 	if (ret <= 0)// TODO: inet_pton error
 	{
 		dprintf(STDERR_FILENO, "%s: inet_pton: Error\n", ping->prg_name);
 		return (1);
 	}
+	ping->sockaddr.sin_addr.s_addr = ping->ip_addr;
 	ping->sockaddr.sin_family = AF_INET;
 	ping->sockaddr.sin_port = 0;
 	ping->sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);

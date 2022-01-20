@@ -57,6 +57,7 @@ typedef struct		s_ping
 	char				*prg_name;
 	char				*hostname;
 	char				address[ADDR_SIZE];
+	uint32_t			ip_addr;
 	struct sockaddr_in	sockaddr;
 	int					sockfd;
 	size_t				ttl_val;
