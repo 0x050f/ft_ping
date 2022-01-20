@@ -16,7 +16,7 @@
 
 # define SEND_DELAY	1
 # define ADDR_SIZE	64
-# define PAYLOAD_SIZE 20
+# define PAYLOAD_SIZE 40
 
 /*
 	Documentation: 
@@ -30,8 +30,8 @@ typedef struct		s_icmp_packet
 	struct iphdr	iphdr; // 20 bytes
 	struct icmphdr	icmphdr; // 8 bytes
 	struct timeval	start; // 16 bytes
-	char			payload[PAYLOAD_SIZE]; // 20 bytes
-}					t_icmp_packet; // 64 bytes in ipv4 (not a norm tho)
+	char			payload[PAYLOAD_SIZE]; // 20 bytes --> 56 bytes DATA
+}					t_icmp_packet; // 84 bytes in ipv4 (not a norm tho)
 
 typedef struct		s_timer
 {
@@ -68,6 +68,9 @@ extern t_ping		g_ping;
 
 /* send_packet.c */
 void	send_packet(int signum);
+
+/* recv_packet.c */
+void	recv_packet(void);
 
 /* utils.c */
 double		get_diff_ms(struct timeval *start, struct timeval *end);

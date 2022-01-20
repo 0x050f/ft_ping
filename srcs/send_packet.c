@@ -19,11 +19,11 @@ unsigned short checksum(void *addr, size_t count)
 void	fill_ip_header(struct iphdr *iphdr)
 {
 	iphdr->version = 4; // ipv4
-	iphdr->ihl = 5; //sizeof(struct iphdr) / 4; // 5 = 20 / 32 bits
+	iphdr->ihl = sizeof(struct iphdr) / 4; // 5 = 20 / 32 bits
 	iphdr->tos = 0;
-	iphdr->tot_len = htons(sizeof(t_icmp_packet));
-	iphdr->id = htons(321);
-	iphdr->frag_off = htons(0);
+	iphdr->tot_len = sizeof(t_icmp_packet);
+	iphdr->id = 0;
+	iphdr->frag_off = 0;
 	iphdr->ttl = g_ping.ttl_val;
 	iphdr->protocol = IPPROTO_ICMP;
 	iphdr->check = 0;
@@ -35,9 +35,8 @@ void	fill_icmp_header(struct icmphdr *icmphdr)
 {
 	icmphdr->type = ICMP_ECHO;
 	icmphdr->code = 0;
-	icmphdr->un.echo.id = htons(getpid());
-	icmphdr->un.echo.sequence = htons(++g_ping.stats.transmitted);
-	icmphdr->checksum = 0;
+	icmphdr->un.echo.id = getpid();
+	icmphdr->un.echo.sequence = ++g_ping.stats.transmitted;
 	icmphdr->checksum = checksum((unsigned short *)icmphdr, sizeof(t_icmp_packet) - sizeof(struct iphdr));
 }
 

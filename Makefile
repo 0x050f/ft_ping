@@ -16,6 +16,7 @@ DIR_OBJS		=	./compiled_srcs/
 # FILES #
 SRCS			=	ft_ping.c \
 					send_packet.c \
+					recv_packet.c \
 					utils.c
 
 INCLUDES		=	ft_ping.h
