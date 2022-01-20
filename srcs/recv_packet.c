@@ -31,7 +31,7 @@ void	recv_packet(void)
 			++g_ping.stats.received;
 			if (gettimeofday(&g_ping.stats.end, NULL)) // TODO: error gettimeofday
 				dprintf(STDERR_FILENO, "%s: gettimeofday: Error\n", g_ping.prg_name);
-			double diff = get_diff_ms(&packet.start, &g_ping.stats.end);
+			double diff = get_diff_ms((void *)&packet.payload, &g_ping.stats.end);
 			if (diff < g_ping.stats.timer.min)
 				g_ping.stats.timer.min = diff;
 			if (diff > g_ping.stats.timer.max)

@@ -16,7 +16,7 @@
 
 # define SEND_DELAY	1
 # define ADDR_SIZE	64
-# define PAYLOAD_SIZE 40
+# define PAYLOAD_SIZE 56
 
 /*
 	Documentation: 
@@ -29,8 +29,7 @@ typedef struct		s_icmp_packet
 {
 	struct iphdr	iphdr; // 20 bytes
 	struct icmphdr	icmphdr; // 8 bytes
-	struct timeval	start; // 16 bytes
-	char			payload[PAYLOAD_SIZE]; // 20 bytes --> 56 bytes DATA
+	char			payload[PAYLOAD_SIZE]; // sizeof(struct timeval) + 40 bytes = 56 bytes
 }					t_icmp_packet; // 84 bytes in ipv4 (not a norm tho)
 
 typedef struct		s_timer

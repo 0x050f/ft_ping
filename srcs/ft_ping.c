@@ -125,6 +125,7 @@ int			main(int argc, char *argv[])
 		return (1);
 	signal(SIGALRM, &send_packet);
 	signal(SIGINT, &ping_stats);
+	printf("PING %s (%s) %d(%ld) bytes of data.\n", g_ping.hostname, g_ping.address, PAYLOAD_SIZE, sizeof(t_icmp_packet));
 	send_packet(0);
 	recv_packet();
 	return (0);
