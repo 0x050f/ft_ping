@@ -52,6 +52,7 @@ void	send_packet(int signum)
 	ft_memset(packet.payload + sizeof(struct timeval), 42, PAYLOAD_SIZE);
 	fill_icmp_header(&packet.icmphdr); // checksum after fill everything in payload
 	if (sendto(g_ping.sockfd, &packet, sizeof(packet), 0, (struct sockaddr *)&g_ping.sockaddr, sizeof(struct sockaddr)) < 0) // TODO: error sendto
-		dprintf(STDERR_FILENO, "%s: sendto: Error\n", g_ping.prg_name);
+		(void)signum;
+//		dprintf(STDERR_FILENO, "%s: sendto: Error\n", g_ping.prg_name);
 	alarm(SEND_DELAY);
 }

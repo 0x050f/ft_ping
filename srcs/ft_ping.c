@@ -12,9 +12,9 @@ void	ping_stats(int signum)
 	(void)signum;
 	stats = &g_ping.stats;
 	printf("\n--- %s ping statistics ---\n", g_ping.hostname);
-	printf("%ld packets transmitted, %ld received, ", stats->transmitted, stats->received);
+	printf("%d packets transmitted, %d received, ", stats->transmitted, stats->received);
 	if (stats->errors)
-		printf("+%ld errors, ", stats->errors);
+		printf("+%d errors, ", stats->errors);
 	percentage = 0;
 	if (stats->received)
 		percentage = (1.0 - (double)stats->received / (double)stats->transmitted) * 100.0;
@@ -56,6 +56,7 @@ int		init_ping(t_ping *ping)
 	int on = 1;
 	/* Set socket options at ip to TTL and value to ttl_val */
 	setsockopt(ping->sockfd, IPPROTO_IP, IP_HDRINCL, (const char *)&on, sizeof(on));
+//	setsockopt(ping->sockfd, SOL_IP, IP_TTL, &ping->ttl_val, sizeof(ping->ttl_val));
 	ping->stats.timer.min = DBL_MAX;
 	if (gettimeofday(&ping->stats.start, NULL))
 	{

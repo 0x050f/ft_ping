@@ -10,13 +10,13 @@ void	fill_msg_header(struct msghdr *msghdr, struct iovec *iov, t_icmp_packet *pa
 	msghdr->msg_iov = iov;
 	msghdr->msg_iovlen = 1;
 	msghdr->msg_control = buffer;
-	msghdr->msg_controllen = 512;
+	msghdr->msg_controllen = MSG_CONTROL_SIZE;
 	msghdr->msg_flags = 0;
 }
 
 void	recv_packet(void)
 {
-	char			buffer[512];
+	char			buffer[MSG_CONTROL_SIZE];
 	struct msghdr	msghdr;
 	struct iovec	iov;
 	t_icmp_packet	packet;
@@ -40,16 +40,20 @@ void	recv_packet(void)
 			g_ping.stats.timer.tsum += diff * 1000;
 			g_ping.stats.timer.tsum2 +=  diff * 1000 * diff * 1000;
 			if (diff < 0.1)
-				printf("icmp_seq=%ld time=%.3f ms\n", g_ping.stats.received, diff);
+				printf("icmp_seq=%d ttl=%d time=%.3f ms\n", packet.icmphdr.un.echo.sequence, packet.iphdr.ttl, diff);
 			else
-				printf("icmp_seq=%ld time=%.2f ms\n", g_ping.stats.received, diff);
+				printf("icmp_seq=%d ttl=%d time=%.2f ms\n", packet.icmphdr.un.echo.sequence, packet.iphdr.ttl, diff);
 		}
 		else if (packet.icmphdr.type != ICMP_ECHO)
 		{
-			printf("icmp->type == %d\n", packet.icmphdr.type);
+			struct icmphdr *icmphdr = (void *)((unsigned long)&packet + 48);
+			char *error;
 			/* TODO: From XXXX Destination host unreachable */
-			char *error = NULL;
-			printf("icmp_seq=%hu %s\n", packet.icmphdr.un.echo.sequence, error);
+			if (packet.icmphdr.type == ICMP_DEST_UNREACH && packet.icmphdr.code == ICMP_HOST_UNREACH)
+				error = "Destination Host Unreachable";
+			else
+				error = NULL;
+			printf("icmp_seq=%d %s\n", icmphdr->un.echo.sequence, error);
 			++g_ping.stats.errors;
 		}
 	}

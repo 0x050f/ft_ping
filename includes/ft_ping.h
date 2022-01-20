@@ -17,6 +17,7 @@
 # define SEND_DELAY	1
 # define ADDR_SIZE	64
 # define PAYLOAD_SIZE 56
+# define MSG_CONTROL_SIZE 64
 
 /*
 	Documentation: 
@@ -43,9 +44,9 @@ typedef struct		s_timer
 
 typedef struct		s_stats
 {
-	size_t			transmitted;
-	size_t			received;
-	size_t			errors;
+	uint16_t		transmitted;
+	uint16_t		received;
+	uint16_t		errors;
 	t_timer			timer;
 	struct timeval	start;
 	struct timeval	end;
