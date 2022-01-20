@@ -78,5 +78,6 @@ double		get_diff_ms(struct timeval *start, struct timeval *end);
 long		ft_sqrt(long long nb, long long x);
 void		*ft_memset(void *b, int c, size_t len);
 void		ft_bzero(void *s, size_t n);
+int			ft_strcmp(const char *s1, const char *s2);
 
 #endif

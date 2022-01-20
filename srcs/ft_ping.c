@@ -19,7 +19,7 @@ void	ping_stats(int signum)
 	if (stats->received)
 		percentage = (1.0 - (double)stats->received / (double)stats->transmitted) * 100.0;
 	time = 0;
-	if (stats->end.tv_sec && stats->end.tv_usec)
+	if (stats->end.tv_sec && stats->end.tv_usec && stats->transmitted > 1)
 		time = get_diff_ms(&stats->start, &stats->end);
 	printf("%.4g%% packet loss, time %ld ms\n", percentage, time);
 	if (stats->received)

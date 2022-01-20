@@ -12,6 +12,51 @@ void	fill_msg_header(struct msghdr *msghdr, struct iovec *iov, char buffer[MSG_C
 	msghdr->msg_flags = 0;
 }
 
+void	update_stats(double diff)
+{
+	if (diff < g_ping.stats.timer.min)
+		g_ping.stats.timer.min = diff;
+	if (diff > g_ping.stats.timer.max)
+		g_ping.stats.timer.max = diff;
+	g_ping.stats.timer.sum += diff;
+	g_ping.stats.timer.tsum += diff * 1000;
+	g_ping.stats.timer.tsum2 +=  diff * 1000 * diff * 1000;
+}
+
+void	print_recv_packet(t_icmp_packet *packet)
+{
+	if (packet->icmphdr.type == ICMP_ECHOREPLY)
+	{
+		++g_ping.stats.received;
+		if (gettimeofday(&g_ping.stats.end, NULL)) // TODO: error gettimeofday
+			dprintf(STDERR_FILENO, "%s: gettimeofday: Error\n", g_ping.prg_name);
+		double diff = get_diff_ms((void *)&packet->payload, &g_ping.stats.end);
+		update_stats(diff);
+		printf("%ld bytes ", PAYLOAD_SIZE + sizeof(struct icmphdr));
+		if (ft_strcmp(g_ping.hostname, g_ping.address))
+			printf("from %s (%s): ", g_ping.hostname, g_ping.address);
+		else
+			printf("from %s: ", g_ping.address);
+		printf("icmp_seq=%d ttl=%d ", packet->icmphdr.un.echo.sequence, packet->iphdr.ttl);
+		if (diff < 0.1)
+			printf("time=%.3f ms\n", diff);
+		else
+			printf("time=%.2f ms\n", diff);
+	}
+	else if (packet->icmphdr.type != ICMP_ECHO)
+	{
+		t_icmp_packet *sent_packet = (void *)((unsigned long)&packet + sizeof(struct iphdr) + sizeof(struct icmphdr));
+		char *error;
+		/* TODO: From XXXX Destination host unreachable */
+		if (packet->icmphdr.type == ICMP_DEST_UNREACH && packet->icmphdr.code == ICMP_HOST_UNREACH)
+			error = "Destination Host Unreachable";
+		else
+			error = NULL;
+		printf("icmp_seq=%d %s\n", sent_packet->icmphdr.un.echo.sequence, error);
+		++g_ping.stats.errors;
+	}
+}
+
 void	recv_packet(void)
 {
 	char			buffer[MSG_CONTROL_SIZE];
@@ -26,35 +71,6 @@ void	recv_packet(void)
 		fill_msg_header(&msghdr, &iov, buffer, *((struct sockaddr *)(&g_ping.sockaddr)));
 		if (recvmsg(g_ping.sockfd, &msghdr, 0) < 0)
 			dprintf(STDERR_FILENO, "%s: recvmsg: Error\n", g_ping.prg_name);
-		if (packet.icmphdr.type == ICMP_ECHOREPLY)
-		{
-			++g_ping.stats.received;
-			if (gettimeofday(&g_ping.stats.end, NULL)) // TODO: error gettimeofday
-				dprintf(STDERR_FILENO, "%s: gettimeofday: Error\n", g_ping.prg_name);
-			double diff = get_diff_ms((void *)&packet.payload, &g_ping.stats.end);
-			if (diff < g_ping.stats.timer.min)
-				g_ping.stats.timer.min = diff;
-			if (diff > g_ping.stats.timer.max)
-				g_ping.stats.timer.max = diff;
-			g_ping.stats.timer.sum += diff;
-			g_ping.stats.timer.tsum += diff * 1000;
-			g_ping.stats.timer.tsum2 +=  diff * 1000 * diff * 1000;
-			if (diff < 0.1)
-				printf("icmp_seq=%d ttl=%d time=%.3f ms\n", packet.icmphdr.un.echo.sequence, packet.iphdr.ttl, diff);
-			else
-				printf("icmp_seq=%d ttl=%d time=%.2f ms\n", packet.icmphdr.un.echo.sequence, packet.iphdr.ttl, diff);
-		}
-		else if (packet.icmphdr.type != ICMP_ECHO)
-		{
-			t_icmp_packet *sent_packet = (void *)((unsigned long)&packet + sizeof(struct iphdr) + sizeof(struct icmphdr));
-			char *error;
-			/* TODO: From XXXX Destination host unreachable */
-			if (packet.icmphdr.type == ICMP_DEST_UNREACH && packet.icmphdr.code == ICMP_HOST_UNREACH)
-				error = "Destination Host Unreachable";
-			else
-				error = NULL;
-			printf("icmp_seq=%d %s\n", sent_packet->icmphdr.un.echo.sequence, error);
-			++g_ping.stats.errors;
-		}
+		print_recv_packet(&packet);
 	}
 }
