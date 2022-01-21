@@ -14,10 +14,13 @@
 # include <sys/time.h>
 # include <unistd.h>
 
-# define SEND_DELAY	1
-# define ADDR_SIZE	64
-# define PAYLOAD_SIZE 56
-# define MSG_CONTROL_SIZE 64
+# define SEND_DELAY			1
+# define ADDR_SIZE			64
+# define PAYLOAD_SIZE		56
+# define MSG_CONTROL_SIZE	64
+
+# define NB_OPTIONS			14
+# define NB_IPV4_OPTIONS	1
 
 /*
 	Documentation: 
@@ -52,6 +55,11 @@ typedef struct		s_stats
 	struct timeval	end;
 }					t_stats;
 
+typedef struct		s_options
+{
+	int				t;
+}					t_options;
+
 typedef struct		s_ping
 {
 	char				*prg_name;
@@ -60,8 +68,9 @@ typedef struct		s_ping
 	uint32_t			ip_addr;
 	struct sockaddr_in	sockaddr;
 	int					sockfd;
-	size_t				ttl_val;
+	int					ttl_val;
 	t_stats				stats;
+	t_options			options;
 
 }					t_ping;
 
@@ -81,6 +90,9 @@ double		get_diff_ms(struct timeval *start, struct timeval *end);
 long		ft_sqrt(long long nb, long long x);
 void		*ft_memset(void *b, int c, size_t len);
 void		ft_bzero(void *s, size_t n);
+int			is_num(const char *str);
+int			ft_atoi(const char *str);
 int			ft_strcmp(const char *s1, const char *s2);
+size_t		ft_strlen(const char *s);
 
 #endif
