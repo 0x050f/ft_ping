@@ -7,7 +7,7 @@ int		init_ping(t_ping *ping)
 	int ret;
 
 	ret = inet_pton(AF_INET, ping->address, &ping->ip_addr);
-	if (ret <= 0)// TODO: inet_pton error
+	if (ret <= 0)
 	{
 		dprintf(STDERR_FILENO, "%s: inet_pton: Error\n", ping->prg_name);
 		return (1);
@@ -16,7 +16,7 @@ int		init_ping(t_ping *ping)
 	ping->sockaddr.sin_family = AF_INET;
 	ping->sockaddr.sin_port = 0;
 	ping->sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
-	if (ping->sockfd < 0)// TODO: socket error
+	if (ping->sockfd < 0)
 	{
 		dprintf(STDERR_FILENO, "%s: socket: Operation not permitted\n", ping->prg_name);
 		return (1);

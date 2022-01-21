@@ -95,7 +95,6 @@ int			check_args(int argc, char *argv[], t_ping *ping)
 	ping->hostname = NULL;
 	if (argc < 2)
 		return (args_error(ERR_NO_ARGS, NULL));
-	/* TODO: options */
 	for (int i = 1; i < argc; i++)
 	{
 		/* Weird when `ping - localhost` != `ping -` */
@@ -107,7 +106,7 @@ int			check_args(int argc, char *argv[], t_ping *ping)
 			ret = resolve_hostname(g_ping.address, g_ping.hostname);
 			if (ret)
 				return (getaddrinfo_error(ret, g_ping.hostname));
-			else if (!g_ping.address) // TODO: inet_ntop error
+			else if (!g_ping.address)
 			{
 				dprintf(STDERR_FILENO, "%s: inet_ntop: Error\n", g_ping.prg_name);
 				return (2);

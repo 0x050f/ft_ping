@@ -70,7 +70,7 @@ void	print_recv_packet(t_icmp_packet *packet)
 	if (packet->icmphdr.type == ICMP_ECHOREPLY)
 	{
 		++g_ping.stats.received;
-		if (gettimeofday(&g_ping.stats.end, NULL)) // TODO: error gettimeofday
+		if (gettimeofday(&g_ping.stats.end, NULL))
 			dprintf(STDERR_FILENO, "%s: gettimeofday: Error\n", g_ping.prg_name);
 		double diff = get_diff_ms((void *)&packet->payload, &g_ping.stats.end);
 		update_stats(diff);
