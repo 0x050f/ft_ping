@@ -42,7 +42,7 @@ const char	*icmp_reply[] =
 	[ICMP_SOURCE_QUENCH]	= "Source Quench",
 	[ICMP_REDIRECT]			= "Redirect (change route)",
 	[ICMP_ECHO]				= "Echo Request", // Unused
-	[ICMP_TIME_EXCEEDED]	= "Time Exceeded",
+	[ICMP_TIME_EXCEEDED]	= "Time to live exceeded",
 	[ICMP_PARAMETERPROB]	= "Parameter Problem",
 	[ICMP_TIMESTAMP]		= "Timestamp Request",
 	[ICMP_TIMESTAMPREPLY]	= "Timestamp Reply",
@@ -55,6 +55,10 @@ const char	*icmp_reply[] =
 void	print_other_packet(t_icmp_packet *packet)
 {
 	t_icmp_packet *sent_packet = (t_icmp_packet *)((unsigned long)packet + sizeof(struct iphdr) + sizeof(struct icmphdr));
+	// Can't show sender hostname (unauthorized function getnameinfo)
+	char addr[ADDR_SIZE];
+	inet_ntop(AF_INET, &packet->iphdr.saddr, addr, ADDR_SIZE);
+	printf("From %s: ", addr);
 	char *error;
 	if (packet->icmphdr.type == ICMP_DEST_UNREACH && packet->icmphdr.code < sizeof(dest_unreach))
 		error = (char *)dest_unreach[packet->icmphdr.code];
