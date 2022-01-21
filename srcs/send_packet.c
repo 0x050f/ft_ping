@@ -26,7 +26,7 @@ void	fill_ip_header(struct iphdr *iphdr)
 	iphdr->frag_off = 0;
 	iphdr->ttl = g_ping.ttl_val;
 	iphdr->protocol = IPPROTO_ICMP;
-	iphdr->check = 0;
+	iphdr->check = 0; // filled by kernel
 	iphdr->saddr = INADDR_ANY;
 	iphdr->daddr = g_ping.ip_addr;
 }
