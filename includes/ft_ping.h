@@ -22,6 +22,24 @@
 # define NB_OPTIONS			14
 # define NB_IPV4_OPTIONS	1
 
+# define ERR_NO_ARGS		0
+# define ERR_NB_DEST		1
+# define ERR_INV_OPT		2
+# define ERR_INV_ARG		3
+# define ERR_OOR_ARG		4 /* OUT OF RANGE */
+# define ERR_REQ_ARG		5
+
+/*
+static const char	*dest_unreach[] =
+{
+	[ICMP_NET_UNREACH]		= "Destination Network Unreachable",
+	[ICMP_HOST_UNREACH]		= "Destination Host Unreachable",
+	[ICMP_PROT_UNREACH]		= "Destination Protocol Unreachable",
+	[ICMP_PORT_UNREACH]		= "Destination Port Unreachable"
+};
+*/
+
+
 /*
 	Documentation: 
 	https://en.wikipedia.org/wiki/Ping_(networking_utility)
@@ -84,6 +102,13 @@ void	recv_packet(void);
 
 /* ping_stats.c */
 void	ping_stats(int signum);
+
+/* args.c */
+int			check_args(int argc, char *argv[], t_ping *ping);
+
+/* error.c */
+void		print_help_menu(void);
+int			args_error(int error, char *str);
 
 /* utils.c */
 double		get_diff_ms(struct timeval *start, struct timeval *end);

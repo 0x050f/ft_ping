@@ -49,7 +49,9 @@ void	print_recv_packet(t_icmp_packet *packet)
 		char *error;
 		/* TODO: From XXXX Destination host unreachable */
 		if (packet->icmphdr.type == ICMP_DEST_UNREACH && packet->icmphdr.code == ICMP_HOST_UNREACH)
+		{
 			error = "Destination Host Unreachable";
+		}
 		else
 			error = NULL;
 		printf("icmp_seq=%d %s\n", sent_packet->icmphdr.un.echo.sequence, error);
