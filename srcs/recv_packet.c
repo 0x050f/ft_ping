@@ -23,6 +23,14 @@ void	update_stats(double diff)
 	g_ping.stats.timer.tsum2 +=  diff * 1000 * diff * 1000;
 }
 
+const char	*dest_unreach[] =
+{
+	[ICMP_NET_UNREACH]		= "Destination Network Unreachable",
+	[ICMP_HOST_UNREACH]		= "Destination Host Unreachable",
+	[ICMP_PROT_UNREACH]		= "Destination Protocol Unreachable",
+	[ICMP_PORT_UNREACH]		= "Destination Port Unreachable"
+};
+
 void	print_recv_packet(t_icmp_packet *packet)
 {
 	if (packet->icmphdr.type == ICMP_ECHOREPLY)
@@ -45,15 +53,19 @@ void	print_recv_packet(t_icmp_packet *packet)
 	}
 	else if (packet->icmphdr.type != ICMP_ECHO)
 	{
-		t_icmp_packet *sent_packet = (void *)((unsigned long)&packet + sizeof(struct iphdr) + sizeof(struct icmphdr));
+		
+		t_icmp_packet *sent_packet = (t_icmp_packet *)((unsigned long)packet + sizeof(struct iphdr) + sizeof(struct icmphdr));
 		char *error;
 		/* TODO: From XXXX Destination host unreachable */
-		if (packet->icmphdr.type == ICMP_DEST_UNREACH && packet->icmphdr.code == ICMP_HOST_UNREACH)
+		if (packet->icmphdr.type == ICMP_DEST_UNREACH)
 		{
-			error = "Destination Host Unreachable";
+			if (packet->icmphdr.code < sizeof(dest_unreach))
+				error = (char *)dest_unreach[packet->icmphdr.code];
+			else
+				error = "Destination Unreachable";
 		}
 		else
-			error = NULL;
+			error = "Error";
 		printf("icmp_seq=%d %s\n", sent_packet->icmphdr.un.echo.sequence, error);
 		++g_ping.stats.errors;
 	}

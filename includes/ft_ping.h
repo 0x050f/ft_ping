@@ -30,17 +30,6 @@
 # define ERR_REQ_ARG		5
 
 /*
-static const char	*dest_unreach[] =
-{
-	[ICMP_NET_UNREACH]		= "Destination Network Unreachable",
-	[ICMP_HOST_UNREACH]		= "Destination Host Unreachable",
-	[ICMP_PROT_UNREACH]		= "Destination Protocol Unreachable",
-	[ICMP_PORT_UNREACH]		= "Destination Port Unreachable"
-};
-*/
-
-
-/*
 	Documentation: 
 	https://en.wikipedia.org/wiki/Ping_(networking_utility)
 	https://en.wikipedia.org/wiki/IPv4#Header
