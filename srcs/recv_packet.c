@@ -23,6 +23,10 @@ void	update_stats(double diff)
 	g_ping.stats.timer.tsum2 +=  diff * 1000 * diff * 1000;
 }
 
+/*
+	See icmp.h
+*/
+
 const char	*dest_unreach[] =
 {
 	[ICMP_NET_UNREACH]		= "Destination Network Unreachable",
@@ -30,6 +34,36 @@ const char	*dest_unreach[] =
 	[ICMP_PROT_UNREACH]		= "Destination Protocol Unreachable",
 	[ICMP_PORT_UNREACH]		= "Destination Port Unreachable"
 };
+
+const char	*icmp_reply[] =
+{
+	[ICMP_ECHOREPLY]		= "Echo Reply", // Unused
+	[ICMP_DEST_UNREACH]		= "Destination Unreachable",
+	[ICMP_SOURCE_QUENCH]	= "Source Quench",
+	[ICMP_REDIRECT]			= "Redirect (change route)",
+	[ICMP_ECHO]				= "Echo Request", // Unused
+	[ICMP_TIME_EXCEEDED]	= "Time Exceeded",
+	[ICMP_PARAMETERPROB]	= "Parameter Problem",
+	[ICMP_TIMESTAMP]		= "Timestamp Request",
+	[ICMP_TIMESTAMPREPLY]	= "Timestamp Reply",
+	[ICMP_INFO_REQUEST]		= "Information Request",
+	[ICMP_INFO_REPLY]		= "Information Reply",
+	[ICMP_ADDRESS]			= "Address Mask Request",
+	[ICMP_ADDRESSREPLY]		= "Address Mask Reply"
+};
+
+void	print_other_packet(t_icmp_packet *packet)
+{
+	t_icmp_packet *sent_packet = (t_icmp_packet *)((unsigned long)packet + sizeof(struct iphdr) + sizeof(struct icmphdr));
+	char *error;
+	if (packet->icmphdr.type == ICMP_DEST_UNREACH && packet->icmphdr.code < sizeof(dest_unreach))
+		error = (char *)dest_unreach[packet->icmphdr.code];
+	else if (packet->icmphdr.type < sizeof(icmp_reply) && icmp_reply[packet->icmphdr.type])
+		error = (char *)icmp_reply[packet->icmphdr.type];
+	else
+		error = "Unknow ICMP Type";
+	printf("icmp_seq=%d %s\n", sent_packet->icmphdr.un.echo.sequence, error);
+}
 
 void	print_recv_packet(t_icmp_packet *packet)
 {
@@ -53,20 +87,7 @@ void	print_recv_packet(t_icmp_packet *packet)
 	}
 	else if (packet->icmphdr.type != ICMP_ECHO)
 	{
-		
-		t_icmp_packet *sent_packet = (t_icmp_packet *)((unsigned long)packet + sizeof(struct iphdr) + sizeof(struct icmphdr));
-		char *error;
-		/* TODO: From XXXX Destination host unreachable */
-		if (packet->icmphdr.type == ICMP_DEST_UNREACH)
-		{
-			if (packet->icmphdr.code < sizeof(dest_unreach))
-				error = (char *)dest_unreach[packet->icmphdr.code];
-			else
-				error = "Destination Unreachable";
-		}
-		else
-			error = "Error";
-		printf("icmp_seq=%d %s\n", sent_packet->icmphdr.un.echo.sequence, error);
+		print_other_packet(packet);
 		++g_ping.stats.errors;
 	}
 }
