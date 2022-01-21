@@ -96,6 +96,7 @@ void	ping_stats(int signum);
 int			check_args(int argc, char *argv[], t_ping *ping);
 
 /* error.c */
+int			getaddrinfo_error(int error, char *str);
 void		print_help_menu(void);
 int			args_error(int error, char *str);
 

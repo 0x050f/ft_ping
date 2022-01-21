@@ -1,5 +1,17 @@
 #include "ft_ping.h"
 
+int			getaddrinfo_error(int error, char *str)
+{
+	dprintf(STDERR_FILENO, "%s: %s: ", g_ping.prg_name, str);
+	if (error == EAI_AGAIN || error == EAI_FAIL)
+		dprintf(STDERR_FILENO, "Temporary failure in name resolution\n");
+	else if (error == EAI_NONAME)
+		dprintf(STDERR_FILENO, "Name or service not known\n");
+	else
+		dprintf(STDERR_FILENO, "Error\n");
+	return (2);
+}
+
 void		print_help_menu(void)
 {
 	char *options[NB_OPTIONS + 1 - NB_IPV4_OPTIONS][2] =

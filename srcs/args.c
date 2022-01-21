@@ -96,20 +96,17 @@ int			check_args(int argc, char *argv[], t_ping *ping)
 	if (argc < 2)
 		return (args_error(ERR_NO_ARGS, NULL));
 	/* TODO: options */
-	/* TODO: help -h */
 	for (int i = 1; i < argc; i++)
 	{
+		/* Weird when `ping - localhost` != `ping -` */
 		if (*argv[i] != '-' || (ft_strlen(argv[i]) == 1 && (argc == i + 1 || ft_strcmp(argv[i + 1], "localhost"))))
 		{
 			if (ping->hostname)
 				return (args_error(ERR_NB_DEST, NULL));
 			ping->hostname = argv[i];
 			ret = resolve_hostname(g_ping.address, g_ping.hostname);
-			if (ret) // TODO: getaddrinfo error
-			{
-				dprintf(STDERR_FILENO, "%s: %s: Name or service not known\n", g_ping.prg_name, g_ping.hostname);
-				return (2);
-			}
+			if (ret)
+				return (getaddrinfo_error(ret, g_ping.hostname));
 			else if (!g_ping.address) // TODO: inet_ntop error
 			{
 				dprintf(STDERR_FILENO, "%s: inet_ntop: Error\n", g_ping.prg_name);
