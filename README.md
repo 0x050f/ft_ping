@@ -64,8 +64,8 @@ typedef struct		s_icmp_packet
 {
 	struct iphdr	iphdr;
 	struct icmphdr	icmphdr;
-	char			payload[PAYLOAD_SIZE];
-}					t_icmp_packet;
+	char		payload[PAYLOAD_SIZE];
+}			t_icmp_packet;
 ```
 From wikipedia:
 ```
