@@ -120,5 +120,7 @@ int			check_args(int argc, char *argv[], t_ping *ping)
 				return (ret);
 		}
 	}
+	if (!ping->hostname)
+		return (args_error(ERR_NO_ARGS, NULL));
 	return (0);
 }
