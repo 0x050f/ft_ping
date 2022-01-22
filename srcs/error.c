@@ -28,6 +28,7 @@ void		print_help_menu(void)
 		{"-Q <tclass>", "use quality of service <tclass> bits"},
 		{"-S <size>", "use <size> as SO_SNDBUF socket option value"},
 		{"-t <ttl>", "define time to live"},
+		{"-v", "verbose output"},
 		{"-w <deadline>", "reply wait <deadline> in seconds"},
 		{"-W <timeout>", "time to wait for response"}
 	};

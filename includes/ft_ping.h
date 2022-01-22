@@ -19,7 +19,7 @@
 # define PAYLOAD_SIZE		56
 # define MSG_CONTROL_SIZE	64
 
-# define NB_OPTIONS			14
+# define NB_OPTIONS			15
 # define NB_IPV4_OPTIONS	1
 
 # define ERR_NO_ARGS		0
