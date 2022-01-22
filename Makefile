@@ -6,7 +6,7 @@ _BLUE		=	\e[34m
 _END		=	\e[0m
 
 # COMPILATION #
-CC_FLAGS	=	-Wall -Wextra -Werror
+CC_FLAGS	=	-Wall -Wextra -Werror -fno-builtin
 
 # DIRECTORIES #
 DIR_HEADERS		=	./includes/
