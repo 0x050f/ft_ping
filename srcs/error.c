@@ -53,7 +53,7 @@ int			usage_error(int error)
 	return (1);
 }
 
-int			args_error(int error, char *str)
+int			args_error(int error, char *str, int range1, int range2)
 {
 	dprintf(STDERR_FILENO, "%s: ", g_ping.prg_name);
 	if (error == ERR_NO_ARGS || error == ERR_NB_DEST)
@@ -64,7 +64,7 @@ int			args_error(int error, char *str)
 	{
 		dprintf(STDERR_FILENO, "invalid argument: '%s'", str);
 		if (error == ERR_OOR_ARG)
-			dprintf(STDERR_FILENO, ": out of range: 0 <= value <= 255");
+			dprintf(STDERR_FILENO, ": out of range: %d <= value <= %d", range1, range2);
 		dprintf(STDERR_FILENO, "\n");
 	}
 	else if (error == ERR_REQ_ARG)

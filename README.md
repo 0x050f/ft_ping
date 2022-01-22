@@ -50,7 +50,6 @@ IPv4 options:
 -Q <tclass>
 -S <size>
 -t <ttl>
--w <deadline>
 -W <timeout>
 -T <timestamp>
 ```

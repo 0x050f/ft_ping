@@ -4,6 +4,7 @@
 # include <arpa/inet.h>
 # include <float.h>
 # include <errno.h>
+# include <limits.h>
 # include <netdb.h>
 # include <netinet/ip.h>
 # include <netinet/ip_icmp.h>
@@ -67,6 +68,7 @@ typedef struct		s_options
 	int				f;
 	int				t;
 	int				v;
+	int				w;
 }					t_options;
 
 typedef struct		s_ping
@@ -78,6 +80,7 @@ typedef struct		s_ping
 	struct sockaddr_in	sockaddr;
 	int					sockfd;
 	int					ttl_val;
+	int					time_max;
 	t_stats				stats;
 	t_options			options;
 }					t_ping;
@@ -99,7 +102,7 @@ int			check_args(int argc, char *argv[], t_ping *ping);
 /* error.c */
 int			getaddrinfo_error(int error, char *str);
 void		print_help_menu(void);
-int			args_error(int error, char *str);
+int			args_error(int error, char *str, int range1, int range2);
 
 /* utils.c */
 double		get_diff_ms(struct timeval *start, struct timeval *end);

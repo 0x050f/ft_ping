@@ -57,7 +57,7 @@ int			handle_options(int argc, char *argv[], int *i)
 				if (ft_strlen(&argv[*i][j + 1]))
 					str = &argv[*i][j + 1];
 				else if (argc  - 1 < *i + 1)
-					return (args_error(ERR_REQ_ARG, "t"));
+					return (args_error(ERR_REQ_ARG, "t", 0, 0));
 				else
 				{
 					*i += 1;
@@ -65,13 +65,34 @@ int			handle_options(int argc, char *argv[], int *i)
 				}
 				g_ping.ttl_val = ft_atoi(str);
 				if (g_ping.ttl_val < 0 || g_ping.ttl_val > 255)
-					return (args_error(ERR_OOR_ARG, str));
+					return (args_error(ERR_OOR_ARG, str, 0, 255));
 				if (!is_num(str))
-					return (args_error(ERR_INV_ARG, str));
+					return (args_error(ERR_INV_ARG, str, 0, 0));
 				return (0);
 			}
 			else if (options[k] == 'v')
 				g_ping.options.v = 1;
+			else if (options[k] == 'w')
+			{
+				char *str;
+
+				g_ping.options.w = 1;
+				if (ft_strlen(&argv[*i][j + 1]))
+					str = &argv[*i][j + 1];
+				else if (argc  - 1 < *i + 1)
+					return (args_error(ERR_REQ_ARG, "w", 0, 0));
+				else
+				{
+					*i += 1;
+					str = argv[*i];
+				}
+				g_ping.time_max = ft_atoi(str);
+				if (g_ping.time_max < 0 || g_ping.ttl_val > INT_MAX)
+					return (args_error(ERR_OOR_ARG, str, 0, INT_MAX));
+				if (!is_num(str))
+					return (args_error(ERR_INV_ARG, str, 0, 0));
+				return (0);
+			}
 		}
 		j++;
 	}
@@ -82,7 +103,7 @@ int			handle_options(int argc, char *argv[], int *i)
 		{
 			char option[2] = {0, 0};
 			option[0] = argv[*i][j];
-			args_error(ERR_INV_OPT, option);
+			args_error(ERR_INV_OPT, option, 0, 0);
 		}
 		print_help_menu();
 		return (2);
@@ -98,14 +119,14 @@ int			check_args(int argc, char *argv[], t_ping *ping)
 	ping->prg_name = argv[0];
 	ping->hostname = NULL;
 	if (argc < 2)
-		return (args_error(ERR_NO_ARGS, NULL));
+		return (args_error(ERR_NO_ARGS, NULL, 0, 0));
 	for (int i = 1; i < argc; i++)
 	{
 		/* Weird when `ping - localhost` != `ping -` */
 		if (*argv[i] != '-' || (ft_strlen(argv[i]) == 1 && (argc == i + 1 || ft_strcmp(argv[i + 1], "localhost"))))
 		{
 			if (ping->hostname)
-				return (args_error(ERR_NB_DEST, NULL));
+				return (args_error(ERR_NB_DEST, NULL, 0, 0));
 			ping->hostname = argv[i];
 			ret = resolve_hostname(g_ping.address, g_ping.hostname);
 			if (ret)
@@ -124,6 +145,6 @@ int			check_args(int argc, char *argv[], t_ping *ping)
 		}
 	}
 	if (!ping->hostname)
-		return (args_error(ERR_NO_ARGS, NULL));
+		return (args_error(ERR_NO_ARGS, NULL, 0, 0));
 	return (0);
 }
