@@ -41,7 +41,6 @@ IPv4 options:
 + IPv6 ping
 + options:
 ```
--f
 -I <interface>
 -l <preload>
 -m <mark>
