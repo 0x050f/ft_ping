@@ -24,8 +24,8 @@ int			handle_options(int argc, char *argv[], int *i)
 {
 	int		j;
 	int		k;
-	char	options[NB_OPTIONS] = {'f', 'h', 'I', 'l', 'm', 'M', 'n', 'p', 'Q',
-									'S', 't', 'T', 'v', 'w', 'W'};
+	char	options[NB_OPTIONS] = {'f', 'h', /*'I', 'l', 'm', 'M',*/ 'n', /*'p', 'Q',
+									'S',*/ 't', /*'T',*/ 'v', 'w'/*, 'W'*/};
 
 	k = 0;
 	j = 1;

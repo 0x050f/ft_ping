@@ -19,28 +19,28 @@ void		print_help_menu(void)
 		{"<destination>", "dns name or ip address"},
 		{"-f", "flood ping"},
 		{"-h", "print help and exit"},
-		{"-I <interface>", "either interface name or address"},
+/*		{"-I <interface>", "either interface name or address"},
 		{"-l <preload>", "send <preload> number of packages while waiting replies"},
 		{"-m <mark>", "tag the packets going out"},
-		{"-M <pmtud opt>", "define mtu discovery, can be one of <do|dont|want>"},
-		{"-n", "no dns name resolution"},
-		{"-p <pattern>", "contents of padding byte"}, 
+		{"-M <pmtud opt>", "define mtu discovery, can be one of <do|dont|want>"}, */
+		{"-n", "no dns name resolution"}, // Already does it ? xD
+/*		{"-p <pattern>", "contents of padding byte"}, 
 		{"-Q <tclass>", "use quality of service <tclass> bits"},
-		{"-S <size>", "use <size> as SO_SNDBUF socket option value"},
+		{"-S <size>", "use <size> as SO_SNDBUF socket option value"},*/
 		{"-t <ttl>", "define time to live"},
 		{"-v", "verbose output"},
-		{"-w <deadline>", "reply wait <deadline> in seconds"},
-		{"-W <timeout>", "time to wait for response"}
+		{"-w <deadline>", "reply wait <deadline> in seconds"}//,
+/*		{"-W <timeout>", "time to wait for response"}*/
 	};
-	char *ipv4_options[NB_IPV4_OPTIONS][2] = {
+/*	char *ipv4_options[NB_IPV4_OPTIONS][2] = {
 		{"-T <timestamp>", "define timestamp, can be one of <tsonly|tsandaddr|tsprespec>"}
-	};
+	};*/
 	printf("\nUsage\n  ping [options] <destination>\n\nOptions:\n");
 	for (size_t i = 0; i < NB_OPTIONS + 1 - NB_IPV4_OPTIONS; i++)
 		printf("  %-18s %s\n", options[i][0], options[i][1]);
-	printf("\nIPv4 options:\n");
-	for (size_t i = 0; i < NB_IPV4_OPTIONS; i++)
-		printf("  %-18s %s\n", ipv4_options[i][0], ipv4_options[i][1]);
+//	printf("\nIPv4 options:\n");
+//	for (size_t i = 0; i < NB_IPV4_OPTIONS; i++)
+//		printf("  %-18s %s\n", ipv4_options[i][0], ipv4_options[i][1]);
 }
 
 int			usage_error(int error)

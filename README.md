@@ -21,37 +21,9 @@ Options:
   <destination>      dns name or ip address
   -f                 flood ping
   -h                 print help and exit
-  -I <interface>     either interface name or address
-  -l <preload>       send <preload> number of packages while waiting replies
-  -m <mark>          tag the packets going out
-  -M <pmtud opt>     define mtu discovery, can be one of <do|dont|want>
   -n                 no dns name resolution
-  -p <pattern>       contents of padding byte
-  -Q <tclass>        use quality of service <tclass> bits
-  -S <size>          use <size> as SO_SNDBUF socket option value
   -t <ttl>           define time to live
   -w <deadline>      reply wait <deadline> in seconds
-  -W <timeout>       time to wait for response
-
-IPv4 options:
-  -T <timestamp>     define timestamp, can be one of <tsonly|tsandaddr|tsprespec>
-```
-
-### TODO-LIST
-+ IPv6 ping
-+ options:
-```
--I <interface>
--l <preload>
--m <mark>
--M <pmtud opt>
--n
--p <pattern>
--Q <tclass>
--S <size>
--t <ttl>
--W <timeout>
--T <timestamp>
 ```
 
 ## Packet
