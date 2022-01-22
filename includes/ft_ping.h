@@ -66,6 +66,7 @@ typedef struct		s_options
 {
 	int				f;
 	int				t;
+	int				v;
 }					t_options;
 
 typedef struct		s_ping

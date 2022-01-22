@@ -70,6 +70,8 @@ int			handle_options(int argc, char *argv[], int *i)
 					return (args_error(ERR_INV_ARG, str));
 				return (0);
 			}
+			else if (options[k] == 'v')
+				g_ping.options.v = 1;
 		}
 		j++;
 	}

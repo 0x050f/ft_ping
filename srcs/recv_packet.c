@@ -59,14 +59,19 @@ void	print_other_packet(t_icmp_packet *packet)
 	char addr[ADDR_SIZE];
 	inet_ntop(AF_INET, &packet->iphdr.saddr, addr, ADDR_SIZE);
 	printf("From %s: ", addr);
-	char *error;
-	if (packet->icmphdr.type == ICMP_DEST_UNREACH && packet->icmphdr.code < sizeof(dest_unreach))
-		error = (char *)dest_unreach[packet->icmphdr.code];
-	else if (packet->icmphdr.type < sizeof(icmp_reply) && icmp_reply[packet->icmphdr.type])
-		error = (char *)icmp_reply[packet->icmphdr.type];
+	if (!g_ping.options.v)
+	{
+		char *error;
+		if (packet->icmphdr.type == ICMP_DEST_UNREACH && packet->icmphdr.code < sizeof(dest_unreach))
+			error = (char *)dest_unreach[packet->icmphdr.code];
+		else if (packet->icmphdr.type < sizeof(icmp_reply) && icmp_reply[packet->icmphdr.type])
+			error = (char *)icmp_reply[packet->icmphdr.type];
+		else
+			error = "Unknow ICMP Type";
+		printf("icmp_seq=%d %s\n", sent_packet->icmphdr.un.echo.sequence, error);
+	}
 	else
-		error = "Unknow ICMP Type";
-	printf("icmp_seq=%d %s\n", sent_packet->icmphdr.un.echo.sequence, error);
+		printf("type=%d code=%d\n", packet->icmphdr.type, packet->icmphdr.code);
 }
 
 void	print_recv_packet(t_icmp_packet *packet)
