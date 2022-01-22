@@ -13,6 +13,7 @@
 # include <stdlib.h>
 # include <sys/time.h>
 # include <unistd.h>
+# include <sys/wait.h>
 
 # define SEND_DELAY			1
 # define ADDR_SIZE			64
@@ -64,6 +65,7 @@ typedef struct		s_stats
 
 typedef struct		s_options
 {
+	int				f;
 	int				t;
 }					t_options;
 
@@ -78,7 +80,6 @@ typedef struct		s_ping
 	int					ttl_val;
 	t_stats				stats;
 	t_options			options;
-
 }					t_ping;
 
 extern t_ping		g_ping;

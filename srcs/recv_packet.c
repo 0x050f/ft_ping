@@ -78,16 +78,21 @@ void	print_recv_packet(t_icmp_packet *packet)
 			dprintf(STDERR_FILENO, "%s: gettimeofday: Error\n", g_ping.prg_name);
 		double diff = get_diff_ms((void *)&packet->payload, &g_ping.stats.end);
 		update_stats(diff);
-		printf("%ld bytes ", PAYLOAD_SIZE + sizeof(struct icmphdr));
-		if (ft_strcmp(g_ping.hostname, g_ping.address))
-			printf("from %s (%s): ", g_ping.hostname, g_ping.address);
+		if (!g_ping.options.f)
+		{
+			printf("%ld bytes ", PAYLOAD_SIZE + sizeof(struct icmphdr));
+			if (ft_strcmp(g_ping.hostname, g_ping.address))
+				printf("from %s (%s): ", g_ping.hostname, g_ping.address);
+			else
+				printf("from %s: ", g_ping.address);
+			printf("icmp_seq=%d ttl=%d ", packet->icmphdr.un.echo.sequence, packet->iphdr.ttl);
+			if (diff < 0.1)
+				printf("time=%.3f ms\n", diff);
+			else
+				printf("time=%.2f ms\n", diff);
+		}
 		else
-			printf("from %s: ", g_ping.address);
-		printf("icmp_seq=%d ttl=%d ", packet->icmphdr.un.echo.sequence, packet->iphdr.ttl);
-		if (diff < 0.1)
-			printf("time=%.3f ms\n", diff);
-		else
-			printf("time=%.2f ms\n", diff);
+			write(STDOUT_FILENO, " \b\b", 3); // printf might but if too fast
 	}
 	else if (packet->icmphdr.type != ICMP_ECHO)
 	{

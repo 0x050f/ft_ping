@@ -47,6 +47,8 @@ int			handle_options(int argc, char *argv[], int *i)
 				print_help_menu();
 				return (2);
 			}
+			else if (options[k] == 'f')
+				g_ping.options.f = 1;
 			else if (options[k] == 't')
 			{
 				char *str;

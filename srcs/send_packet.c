@@ -49,9 +49,24 @@ void	send_packet(int signum)
 	fill_ip_header(&packet.iphdr);
 	if (gettimeofday((void *)&packet.payload, NULL))
 		dprintf(STDERR_FILENO, "%s: gettimeofday: Error\n", g_ping.prg_name);
-	ft_memset(packet.payload + sizeof(struct timeval), 42, PAYLOAD_SIZE);
+	ft_memset(packet.payload + sizeof(struct timeval), 42, PAYLOAD_SIZE - sizeof(struct timeval));
 	fill_icmp_header(&packet.icmphdr); // checksum after fill everything in payload
 	if (sendto(g_ping.sockfd, &packet, sizeof(packet), 0, (struct sockaddr *)&g_ping.sockaddr, sizeof(struct sockaddr)) < 0)
 		dprintf(STDERR_FILENO, "%s: sendto: Error\n", g_ping.prg_name);
-	alarm(SEND_DELAY);
+	if (!g_ping.options.f)
+		alarm(SEND_DELAY);
+	else
+	{
+		write(STDOUT_FILENO, ".", 1); // printf might bug if too fast
+		struct itimerval it_val;
+
+		it_val.it_value.tv_sec = 0;
+		if (g_ping.stats.timer.sum)
+			it_val.it_value.tv_usec = (g_ping.stats.timer.sum / g_ping.stats.received) * 1000;
+		else
+			it_val.it_value.tv_usec = 50;
+		it_val.it_interval = it_val.it_value;
+		if (setitimer(ITIMER_REAL, &it_val, NULL) < 0)
+			dprintf(STDERR_FILENO, "%s: setittimer: Error\n", g_ping.prg_name);
+	}
 }

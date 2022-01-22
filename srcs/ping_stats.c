@@ -27,7 +27,8 @@ void	ping_stats(int signum)
 		tmdev = 0;
 		if (stats->transmitted != 1)
 			tmdev = (long double)ft_sqrt(stats->timer.tsum2 - stats->timer.tsum * stats->timer.tsum, stats->timer.max * 1000 - stats->timer.min * 1000) / 1000.0;
-		printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f ms\n", stats->timer.min, stats->timer.sum / stats->received, stats->timer.max, tmdev);
+		printf("rtt min/avg/max/mdev = %.3f/%.3f/%.3f/%.3f ms", stats->timer.min, stats->timer.sum / stats->received, stats->timer.max, tmdev);
+		printf("\n");
 	}
 	exit(0);
 }
