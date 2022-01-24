@@ -50,7 +50,7 @@ void	send_packet(int signum)
 	if (gettimeofday((void *)&packet.payload, NULL))
 		dprintf(STDERR_FILENO, "%s: gettimeofday: Error\n", g_ping.prg_name);
 	if (g_ping.options.w && (((struct timeval *)&packet.payload)->tv_sec - g_ping.stats.start.tv_sec) * 1000 + (((struct timeval *)&packet.payload)->tv_usec - g_ping.stats.start.tv_usec) / 1000 >= g_ping.time_max * 1000)
-		raise(SIGINT);
+		ping_stats(0);
 	ft_memset(packet.payload + sizeof(struct timeval), 42, PAYLOAD_SIZE - sizeof(struct timeval));
 	fill_icmp_header(&packet.icmphdr); // checksum after fill everything in payload
 	if (sendto(g_ping.sockfd, &packet, sizeof(packet), 0, (struct sockaddr *)&g_ping.sockaddr, sizeof(struct sockaddr)) < 0)
